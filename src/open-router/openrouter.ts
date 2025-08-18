@@ -63,8 +63,8 @@ export async function tryFreeAI(systemPrompt: string, userPrompt: string) {
         if (!res.ok) throw new Error(data?.error?.message || "Unknown error");
 
         return data.choices[0].message.content;
-      } catch (err: any) {
-        console.warn(`Model ${model} on key failed:`, err.message);
+      } catch (err: unknown) {
+        console.warn(`Model ${model} on key failed:`, err);
         continue; // Try next
       }
     }
