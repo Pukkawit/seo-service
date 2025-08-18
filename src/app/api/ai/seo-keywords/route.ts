@@ -129,13 +129,29 @@ If no keywords are available, return ["I can't find any keyword"].
 `;
 
     // ---------- AI Call ----------
-    const keywords: string[] = await tryFreeAI(systemPrompt, userPrompt);
+    // ---------- AI Call ----------
+    const rawResult = await tryFreeAI(systemPrompt, userPrompt);
 
-    if (keywords.length === 0) {
-      return NextResponse.json(
-        { error: "No valid keywords generated." },
-        { status: 422 }
-      );
+    // 🚨 Debug log to Supabase
+    await supabase.from("seo_logs").insert({
+      entity: "vendor",
+      entity_id: vendorId,
+      action: "debug_ai_output",
+      inputs: { vendorId, niche, location },
+      outputs: { rawResult },
+    });
+
+    let keywords: string[] = [];
+    try {
+      const parsed = JSON.parse(rawResult as unknown as string);
+      if (Array.isArray(parsed) && parsed.every((k) => typeof k === "string")) {
+        keywords = parsed;
+      }
+    } catch {
+      keywords = (rawResult as unknown as string)
+        .split(/,|\n/)
+        .map((k) => k.trim().replace(/^"+|"+$/g, ""))
+        .filter((k) => k.length > 0);
     }
 
     // ---------- Save to DB ----------

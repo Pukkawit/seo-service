@@ -1,4 +1,6 @@
-// openrouter.ts
+// @/open-router/openrouter.ts
+let lastKeyIndex = 0;
+
 export const apiKeys = [
   process.env.OPENROUTER_API_KEY_0!,
   process.env.OPENROUTER_API_KEY_1!,
@@ -11,33 +13,44 @@ export const apiKeys = [
   process.env.OPENROUTER_API_KEY_8!,
   process.env.OPENROUTER_API_KEY_9!,
   process.env.OPENROUTER_API_KEY_10!,
-];
+].filter(Boolean);
 
 const workingModels = [
-  "mistralai/mistral-small-3.2-24b-instruct:free:online",
-  "deepseek/deepseek-chat-v3-0324:free:free:online",
-  "mistralai/mistral-small-3.1-24b-instruct:free:online",
-  "qwen/qwq-32b:free:online",
-  "deepseek/deepseek-r1-distill-llama-70b:free:online",
-  "deepseek/deepseek-r1:free:online",
   "google/gemini-2.0-flash-exp:free:online",
+  "mistralai/mistral-small-3.2-24b-instruct:free:online",
+  "deepseek/deepseek-r1-distill-llama-70b:free:online",
   "meta-llama/llama-3.3-70b-instruct:free:online",
-  "meta-llama/llama-3.2-3b-instruct:free:online",
-  "qwen/qwen-2.5-72b-instruct:free:online",
-  "meta-llama/llama-3.1-405b-instruct:free:online",
-  "google/gemma-2-9b-it:free:online",
-  "microsoft/mai-ds-r1:free:online",
-  "deepseek/deepseek-r1-0528:free:online",
-  "mistralai/mistral-7b-instruct:free:online",
-  "mistralai/devstral-small-2505:free:online",
 ];
 
-export async function tryFreeAI(systemPrompt: string, userPrompt: string) {
-  for (const key of apiKeys) {
-    for (const model of workingModels) {
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeout = 20000
+): Promise<Response> {
+  return Promise.race([
+    fetch(url, options),
+    new Promise<Response>((_, reject) =>
+      setTimeout(() => reject(new Error("Request timeout")), timeout)
+    ),
+  ]) as Promise<Response>;
+}
+
+export async function tryFreeAI(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string[]> {
+  const totalKeys = apiKeys.length;
+  if (totalKeys === 0) throw new Error("No API keys provided");
+
+  for (const model of workingModels) {
+    for (let i = 0; i < totalKeys; i++) {
+      const keyIndex = (lastKeyIndex + i) % totalKeys;
+      const key = apiKeys[keyIndex];
+
       try {
-        console.log("Current Model:", model);
-        const res = await fetch(
+        console.log(`Trying model=${model} with keyIndex=${keyIndex}`);
+
+        const res = await fetchWithTimeout(
           "https://openrouter.ai/api/v1/chat/completions",
           {
             method: "POST",
@@ -51,25 +64,42 @@ export async function tryFreeAI(systemPrompt: string, userPrompt: string) {
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userPrompt },
               ],
-              plugins: [{ id: "web", max_results: 3 }], // only works on some models
             }),
           }
         );
 
-        const data = await res.json();
+        if (res.status === 429 || res.status === 402) continue;
 
-        if (res.status === 429) continue; // Too many requests - try next key/model
-        if (res.status === 402) continue; // Insufficient credit - try next
+        const data = await res.json();
         if (!res.ok) throw new Error(data?.error?.message || "Unknown error");
 
-        return data.choices[0].message.content;
-      } catch (err: unknown) {
-        console.warn(`Model ${model} on key failed:`, err);
-        continue; // Try next
+        lastKeyIndex = keyIndex;
+
+        const output = data.choices?.[0]?.message?.content ?? "";
+
+        // ✅ Attempt JSON parse first
+        try {
+          const parsed = JSON.parse(output);
+          if (Array.isArray(parsed)) {
+            return parsed.map((k) => String(k).trim());
+          }
+        } catch {
+          // fallback → parse lines/commas
+        }
+
+        // ✅ Fallback: extract keywords from text
+        return output
+          .split(/,|\n|;/)
+          .map((k: string) => k.trim().replace(/^"+|"+$/g, ""))
+          .filter((k: string) => k.length > 2);
+      } catch (err) {
+        console.warn(`Failed model=${model} keyIndex=${i}:`, err);
+        continue;
       }
     }
   }
+
   throw new Error(
-    "All keys and models failed. Please wait or rotate more accounts."
+    "All keys and models failed. Please add more keys or retry later."
   );
 }
