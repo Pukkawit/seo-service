@@ -75,20 +75,24 @@ export async function tryFreeAI(
 
         lastKeyIndex = keyIndex;
 
-        const output = data.choices?.[0]?.message?.content ?? "";
+        let rawContent = data.choices?.[0]?.message?.content ?? "";
+        console.log("AI RAW CONTENT:", rawContent);
 
-        // ✅ Attempt JSON parse first
+        // ✅ Strip code fences (```json ... ```)
+        rawContent = rawContent.replace(/```json|```/gi, "").trim();
+
+        // ✅ Try JSON parse first
         try {
-          const parsed = JSON.parse(output);
+          const parsed = JSON.parse(rawContent);
           if (Array.isArray(parsed)) {
             return parsed.map((k) => String(k).trim());
           }
         } catch {
-          // fallback → parse lines/commas
+          // not JSON, fallback
         }
 
-        // ✅ Fallback: extract keywords from text
-        return output
+        // ✅ Fallback: split into keywords
+        return rawContent
           .split(/,|\n|;/)
           .map((k: string) => k.trim().replace(/^"+|"+$/g, ""))
           .filter((k: string) => k.length > 2);

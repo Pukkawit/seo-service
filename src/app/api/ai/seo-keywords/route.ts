@@ -14,7 +14,7 @@ import type {
 
 interface VendorSEORequest {
   vendorId: string;
-  businessType: string; // e.g., "fashion", "restaurant"
+  businessType: string;
   businessModel: "online" | "brick_and_mortar" | "hybrid";
   niche: string;
   location: string;
@@ -117,41 +117,18 @@ Generate up to 30 SEO keywords that:
 - Are fresh and relevant to the timeframe
 - Exclude brand names unless provided in input
 - Output ONLY as JSON array of strings
-
-Example (generic across niches):
-["best catering services in Lagos",
- "affordable bridal gowns Port Harcourt",
- "top luxury apartments Owerri",
- "buy organic groceries online Abuja",
- "children birthday costume rentals Ikeja"]
-
-If no keywords are available, return ["I can't find any keyword"].
 `;
 
     // ---------- AI Call ----------
-    // ---------- AI Call ----------
-    const rawResult = await tryFreeAI(systemPrompt, userPrompt);
+    const keywords: string[] = await tryFreeAI(systemPrompt, userPrompt);
 
-    // 🚨 Debug log to Supabase
-    await supabase.from("seo_logs").insert({
-      entity: "vendor",
-      entity_id: vendorId,
-      action: "debug_ai_output",
-      inputs: { vendorId, niche, location },
-      outputs: { rawResult },
-    });
+    console.log("✅ SEO Keywords Generated:", keywords);
 
-    let keywords: string[] = [];
-    try {
-      const parsed = JSON.parse(rawResult as unknown as string);
-      if (Array.isArray(parsed) && parsed.every((k) => typeof k === "string")) {
-        keywords = parsed;
-      }
-    } catch {
-      keywords = (rawResult as unknown as string)
-        .split(/,|\n/)
-        .map((k) => k.trim().replace(/^"+|"+$/g, ""))
-        .filter((k) => k.length > 0);
+    if (!keywords || keywords.length === 0) {
+      return NextResponse.json(
+        { error: "No valid keywords generated." },
+        { status: 422 }
+      );
     }
 
     // ---------- Save to DB ----------
