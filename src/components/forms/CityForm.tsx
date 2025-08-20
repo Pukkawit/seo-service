@@ -3,6 +3,10 @@
 import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { addLocation } from "@/app/actions/locations";
+import { Button } from "../formElements/Button";
+import TextField from "../formElements/TextField";
+import { DeleteButton } from "../formElements/DeleteButton";
 
 const categories = [
   "area",
@@ -44,7 +48,7 @@ export default function CityForm() {
     name: "areas", // ✅ Works now
   });
 
-  const onSubmit: SubmitHandler<CityFormValues> = (data) => {
+  const onSubmit: SubmitHandler<CityFormValues> = async (data) => {
     // Transform areas back into string[]
     const transformed = {
       city: data.city,
@@ -54,6 +58,18 @@ export default function CityForm() {
 
     console.log("🔍 Transformed for DB:", transformed);
     /*  console.log("Submitted:", data); */
+
+    try {
+      const response = await addLocation(transformed); // call server action
+      if (response.success) {
+        alert("✅ Locations saved successfully!");
+      } else {
+        alert(`❌ Error: ${response.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Unexpected error occurred");
+    }
   };
 
   return (
@@ -79,16 +95,17 @@ export default function CityForm() {
 
       {/* Dynamic Areas */}
       <div>
-        <label>Areas</label>
         {fields.map((field, index) => (
           <div key={field.id} className="flex gap-2 mb-2">
-            <input
+            <TextField
+              label="Area"
               {...register(`areas.${index}.value` as const)} // ✅ Note `.value`
               className="border px-2 py-1"
             />
             <button type="button" onClick={() => remove(index)}>
               ✕
             </button>
+            <DeleteButton onClick={() => remove(index)} />
           </div>
         ))}
         <button type="button" onClick={() => append({ value: "" })}>
@@ -96,9 +113,9 @@ export default function CityForm() {
         </button>
       </div>
 
-      <button type="submit" className="bg-green-600 text-white px-4 py-2">
+      <Button type="submit" className="bg-green-600 text-white px-4 py-2">
         Save
-      </button>
+      </Button>
     </form>
   );
 }
