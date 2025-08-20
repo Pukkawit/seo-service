@@ -102,9 +102,6 @@ export default function CityForm() {
               {...register(`areas.${index}.value` as const)} // ✅ Note `.value`
               className="border px-2 py-1"
             />
-            <button type="button" onClick={() => remove(index)}>
-              ✕
-            </button>
             <DeleteButton onClick={() => remove(index)} />
           </div>
         ))}
