@@ -1,6 +1,11 @@
 "use client";
 
-import { useForm, useFieldArray, type SubmitHandler } from "react-hook-form";
+import {
+  useForm,
+  useFieldArray,
+  Controller,
+  type SubmitHandler,
+} from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addLocation } from "@/app/actions/locations";
@@ -91,14 +96,22 @@ export function CityForm() {
       />
 
       {/* Category */}
-      <HTMLSelect
-        label="Category"
-        options={categories.map((category) => ({
-          label: category,
-          value: category,
-        }))}
-        {...register("category")}
-        error={errors.category?.message}
+      <Controller
+        name="category"
+        control={control}
+        render={({ field }) => (
+          <HTMLSelect
+            label="Category"
+            options={categories.map((category) => ({
+              label: category,
+              value: category,
+            }))}
+            value={field.value}
+            onChange={field.onChange}
+            enableOthers
+            error={errors.category?.message}
+          />
+        )}
       />
 
       {/* Dynamic Areas */}

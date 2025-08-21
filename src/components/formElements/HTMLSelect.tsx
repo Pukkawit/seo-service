@@ -171,7 +171,8 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
       }
 
       if (normalizedValue === "Others") {
-        return customValue ? `Others - ${customValue}` : "Others";
+        const result = customValue ? `Others - ${customValue}` : "Others";
+        return result;
       }
 
       if (selectedOption) {
