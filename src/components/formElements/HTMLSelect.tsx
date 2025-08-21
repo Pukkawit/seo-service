@@ -94,19 +94,12 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [customValue, setCustomValue] = useState("");
     const [isOthersSelected, setIsOthersSelected] = useState(false);
-    const [hasOpened, setHasOpened] = useState(false); // New state for animation control
     const [searchTerm, setSearchTerm] = useState("");
     const selectRef = useRef<HTMLDivElement>(null);
-    const hiddenInputRef = useRef<HTMLInputElement>(null); // Internal ref for the hidden input
-    const isInitialRender = useRef(true); // New ref to track initial render
+    const hiddenInputRef = useRef<HTMLInputElement>(null);
 
     // Combine the forwarded ref with the internal ref
     React.useImperativeHandle(ref, () => hiddenInputRef.current!, []);
-
-    // Set isInitialRender to false after the first render
-    useEffect(() => {
-      isInitialRender.current = false;
-    }, []);
 
     const allOptions = useMemo(() => {
       return enableOthers
@@ -126,97 +119,85 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
       );
     }, [allOptions, searchTerm]);
 
-    // Determine the currently selected option based on the 'value' prop
     const selectedOption = useMemo(() => {
-      const normalizedValue = value === null ? "" : value; // Treat null as empty string for comparison
+      if (!value) return null;
 
-      if (
-        normalizedValue &&
-        typeof normalizedValue === "string" &&
-        normalizedValue.startsWith("Others - ")
-      ) {
-        return { label: "Others", value: "Others" }; // Treat as "Others" option for display logic
+      const normalizedValue = String(value);
+
+      // Handle "Others - customValue" format
+      if (normalizedValue.startsWith("Others - ")) {
+        return { label: "Others", value: "Others" };
       }
+
+      // Find exact match in options
       const foundOption = allOptions?.find(
-        (option) => option.value === normalizedValue
+        (option) => String(option.value) === normalizedValue
       );
-      return foundOption;
+      return foundOption || null;
     }, [value, allOptions]);
 
     // Effect to initialize customValue and isOthersSelected based on the incoming 'value' prop
     useEffect(() => {
-      const normalizedValue = value === null ? "" : value;
-      if (normalizedValue && typeof normalizedValue === "string") {
-        if (normalizedValue.startsWith("Others - ")) {
-          setIsOthersSelected(true);
-          setCustomValue(normalizedValue.replace("Others - ", ""));
-        } else if (normalizedValue === "Others") {
-          setIsOthersSelected(true);
-          setCustomValue("");
-        } else {
-          setIsOthersSelected(false);
-          setCustomValue("");
-        }
+      if (!value) {
+        setIsOthersSelected(false);
+        setCustomValue("");
+        return;
+      }
+
+      const normalizedValue = String(value);
+
+      if (normalizedValue.startsWith("Others - ")) {
+        setIsOthersSelected(true);
+        setCustomValue(normalizedValue.replace("Others - ", ""));
+      } else if (normalizedValue === "Others") {
+        setIsOthersSelected(true);
+        setCustomValue("");
       } else {
         setIsOthersSelected(false);
         setCustomValue("");
       }
     }, [value]);
 
-    // Display logic: always show customValue for "Others"
     const displayValue = useMemo(() => {
-      if (isOthersSelected) {
-        return `Others - ${customValue}`.trim() === "Others -"
-          ? "Others"
-          : `Others - ${customValue}`; // Show custom text or "Others" if empty
-      }
-      return selectedOption?.label || placeholder;
-    }, [isOthersSelected, customValue, selectedOption, placeholder]);
-
-    const handleToggle = (e: React.MouseEvent) => {
-      if (disabled) return;
-
-      // Prevent opening on the very first render, regardless of e.detail
-      if (isInitialRender.current) {
-        console.log("HTMLSelect: Preventing toggle on initial render.");
-        return;
+      if (!value || value === "") {
+        return placeholder;
       }
 
-      // For subsequent interactions, only allow toggle if it's a user-initiated click (e.detail > 0)
-      // This helps prevent programmatic clicks (e.detail === 0) from opening the dropdown
-      if (e.detail === 0) {
-        console.log(
-          "HTMLSelect: Programmatic click detected, preventing toggle."
-        );
-        return;
+      const normalizedValue = String(value);
+
+      if (normalizedValue.startsWith("Others - ")) {
+        const customPart = normalizedValue.replace("Others - ", "");
+        return `Others - ${customPart}`;
       }
 
-      setIsOpen((prevState) => {
-        if (!prevState) {
-          setHasOpened(true); // Mark as opened for animation
-        }
-        return !prevState;
-      });
-    };
+      if (normalizedValue === "Others") {
+        return customValue ? `Others - ${customValue}` : "Others";
+      }
 
-    const updateHiddenInputAndDispatch = (newValue: string) => {
-      if (hiddenInputRef.current) {
+      if (selectedOption) {
+        return selectedOption.label;
+      }
+
+      return normalizedValue;
+    }, [value, selectedOption, customValue, placeholder]);
+
+    const updateValue = (newValue: string) => {
+      if (hiddenInputRef.current && onChange) {
+        // Update the hidden input value
         hiddenInputRef.current.value = newValue;
-        // Manually dispatch a change event to trigger react-hook-form or other listeners
-        const event = new Event("change", { bubbles: true });
-        hiddenInputRef.current.dispatchEvent(event);
-        console.log(
-          "HTMLSelect: Dispatched change event with value:",
-          newValue
-        );
-        // If onChange prop is provided, call it manually as well
-        if (onChange) {
-          onChange({
-            target: hiddenInputRef.current,
-            type: "change",
-            // Add other properties if needed for a full React.ChangeEvent
-          } as React.ChangeEvent<HTMLInputElement>);
-        }
+
+        // Create a proper synthetic event
+        const syntheticEvent = {
+          target: hiddenInputRef.current,
+          currentTarget: hiddenInputRef.current,
+          type: "change",
+          bubbles: true,
+          cancelable: true,
+          preventDefault: () => {},
+          stopPropagation: () => {},
+        } as React.ChangeEvent<HTMLInputElement>;
+
+        onChange(syntheticEvent);
       }
     };
 
@@ -226,11 +207,12 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
       const isOthers = optionValue === "Others";
       setIsOthersSelected(isOthers);
 
-      const finalValue = isOthers ? "Others - " : optionValue; // Initial "Others - " or actual value
+      const finalValue = isOthers ? "Others" : optionValue;
+      updateValue(finalValue);
 
-      updateHiddenInputAndDispatch(finalValue);
-
-      setCustomValue("");
+      if (!isOthers) {
+        setCustomValue("");
+      }
       setIsOpen(false);
     };
 
@@ -239,13 +221,32 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
     ) => {
       const newValue = e.target.value;
       setCustomValue(newValue);
-      const finalValue = `Others - ${newValue}`;
 
-      updateHiddenInputAndDispatch(finalValue);
+      // Check if the typed value matches any existing option
+      const matchingOption = options?.find(
+        (option) =>
+          option.value.toLowerCase() === newValue.toLowerCase() ||
+          option.label.toLowerCase() === newValue.toLowerCase()
+      );
+
+      if (matchingOption) {
+        // If it matches an existing option, use that option's value directly
+        updateValue(matchingOption.value);
+        setIsOthersSelected(false);
+        setCustomValue("");
+      } else {
+        // Otherwise, treat it as a custom "Others" value
+        const finalValue = newValue ? `Others - ${newValue}` : "Others";
+        updateValue(finalValue);
+      }
     };
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
+    };
+
+    const handleToggle = () => {
+      setIsOpen(!isOpen);
     };
 
     // Close dropdown when clicking outside
@@ -257,33 +258,16 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
         ) {
           setIsOpen(false);
           setSearchTerm("");
-          // Trigger onBlur for the hidden input when clicking outside
-          if (hiddenInputRef.current && onBlur) {
-            // Create a valid FocusEvent for HTMLInputElement
-            const focusEvent = new FocusEvent("blur", {
-              bubbles: true,
-              cancelable: false,
-              composed: true,
-              relatedTarget: null, // No related target for blur
-            }) as unknown as React.FocusEvent<HTMLInputElement>; // Cast to unknown first, then to React.FocusEvent<HTMLInputElement>
-            Object.defineProperty(focusEvent, "target", {
-              value: hiddenInputRef.current,
-              writable: false,
-            });
-            Object.defineProperty(focusEvent, "currentTarget", {
-              value: hiddenInputRef.current,
-              writable: false,
-            });
-
-            onBlur(focusEvent);
-          }
         }
       };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }, [onBlur]);
+
+      if (isOpen) {
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+        };
+      }
+    }, [isOpen]);
 
     return (
       <div
@@ -318,28 +302,27 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
           )}
         >
           <div className="flex-1 relative">
-            {/* Hidden input to mimic HTML select for form libraries */}
             <input
               type="hidden"
               id={id}
               name={name}
               value={value || ""} // Controlled by the value prop
               ref={hiddenInputRef}
-              onChange={onChange} // Pass the onChange handler from props
-              onBlur={onBlur} // Pass the onBlur handler from props
               disabled={disabled}
+              onBlur={onBlur}
               {...rest} // Pass any other HTML input attributes
             />
 
             <div
               className={cn(
                 `relative w-full flex px-3 py-[9px] text-sm justify-between items-center border shadow-sm focus:outline-none h-[2.4rem]`,
-                displayValue !== placeholder &&
-                  "border-primary bg-background text-primary font-medium",
+                value && value !== "" && displayValue !== placeholder
+                  ? "border-primary bg-background text-primary font-medium"
+                  : "border-input bg-input text-foreground",
                 disabled
                   ? "focus:ring-muted-foreground focus:border-muted-foreground bg-muted/50 border-muted-foreground/50 cursor-not-allowed text-muted-foreground/40"
-                  : "focus:ring-primary focus:border-primary bg-input text-foreground",
-                buttonClassName || "border-input",
+                  : "focus:ring-primary focus:border-primary",
+                buttonClassName,
                 isOpen ? "rounded-t-md" : "rounded-md",
                 error && "border-destructive"
               )}
@@ -351,21 +334,19 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
                 className={`h-full w-full flex items-center text-sm justify-between cursor-pointer`}
               >
                 <div className="overflow-hidden flex-1 relative">
-                  {" "}
-                  {/* Added flex-1 and relative */}
                   <p
                     className={cn(
                       `line-clamp-1`,
-                      isOthersSelected // Always transparent when "Others" is selected
+                      isOthersSelected
                         ? "text-transparent"
-                        : displayValue !== placeholder
+                        : value && value !== ""
                         ? "text-primary font-medium"
                         : "text-muted-foreground"
                     )}
                   >
                     {displayValue}
                   </p>
-                  {isOthersSelected && ( // Input for "Others" overlays the transparent text
+                  {isOthersSelected && (
                     <input
                       name={`${id}-other`}
                       id={`${id}-other`}
@@ -377,16 +358,14 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
                       placeholder="Other (please specify)"
                       className={cn(
                         disabled ? "text-muted-foreground/50" : "",
-                        `absolute top-0 left-0 h-full px-3 py-[9px] text-primary bg-transparent outline-none text-sm font-medium text-ellipsis overflow-hidden truncate`, // Added truncate
-                        `w-[calc(100%-2.5rem)]` // Adjusted width to leave space for chevron
+                        `absolute top-0 left-0 h-full pr-3 py-[10px] text-primary bg-transparent outline-none text-sm font-medium text-ellipsis overflow-hidden truncate`,
+                        `w-[calc(100%-2.5rem)]`
                       )}
-                      onClick={(e) => e.stopPropagation()} // Prevent toggle when typing in this input
+                      onClick={(e) => e.stopPropagation()}
                     />
                   )}
                 </div>
                 <div className="flex-shrink-0 w-8 flex items-center justify-end">
-                  {" "}
-                  {/* Fixed width for chevron container */}
                   <ChevronDown
                     className={cn(
                       "text-sm transition-transform duration-200",
@@ -396,63 +375,70 @@ const HTMLSelect = React.forwardRef<HTMLInputElement, HTMLSelectProps>(
                 </div>
               </div>
             </div>
-            <div
-              className={cn(
-                `absolute z-50 left-0 right-0 top-[100%] bg-popover border rounded-b-md shadow-lg overflow-hidden border-primary border-t-0 text-left`,
-                hasOpened &&
-                  (isOpen ? "animate-slide-down" : "animate-slide-up") // Apply animations
-              )}
-              style={
-                {
-                  "--dropdown-max-height": `${maxHeight}px`,
-                } as React.CSSProperties
-              } // Pass max-height as CSS variable
-            >
-              {enableSearch && (
-                <div className="p-2 border-b border-border">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search options..."
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                      disabled={disabled}
-                      className={cn(
-                        `w-full px-2 py-1 pr-10 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary`,
-                        disabled ? "text-muted-foreground" : "text-foreground",
-                        "bg-input border-input"
-                      )}
-                    />
-                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                  </div>
-                </div>
-              )}
-              <ul
-                className="overflow-auto"
-                style={{ maxHeight: `${maxHeight}px` }}
-              >
-                {filteredOptions && filteredOptions.length > 0 ? (
-                  filteredOptions.map((option, index) => (
-                    <li
-                      key={index} // Using index as key since values might not be unique or stringifiable
-                      className={cn(
-                        `px-4 py-2 cursor-pointer hover:bg-accent/10 hover:text-accent-foreground text-sm border-b border-border last:border-b-0`,
-                        optionClassName || "text-foreground",
-                        value === option.value ? `font-medium text-primary` : ""
-                      )}
-                      onClick={() => handleOptionClick(option.value)}
-                      style={{ backgroundColor: option.color }}
-                    >
-                      {option.label}
-                    </li>
-                  ))
-                ) : (
-                  <li className="px-4 py-2 text-sm text-muted-foreground">
-                    No options found.
-                  </li>
+            {isOpen && (
+              <div
+                className={cn(
+                  `absolute z-50 left-0 right-0 top-[100%] bg-popover border rounded-b-md shadow-lg overflow-hidden border-primary border-t-0 text-left`,
+                  "animate-slide-down",
+                  dropdownClassName
                 )}
-              </ul>
-            </div>
+                style={
+                  {
+                    "--dropdown-max-height": `${maxHeight}px`,
+                  } as React.CSSProperties
+                }
+              >
+                {enableSearch && (
+                  <div className="p-2 border-b border-border">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search options..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        disabled={disabled}
+                        className={cn(
+                          `w-full px-2 py-1 pr-10 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary`,
+                          disabled
+                            ? "text-muted-foreground"
+                            : "text-foreground",
+                          "bg-input border-input"
+                        )}
+                      />
+                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                    </div>
+                  </div>
+                )}
+                <ul
+                  className="overflow-auto"
+                  style={{ maxHeight: `${maxHeight}px` }}
+                >
+                  {filteredOptions && filteredOptions.length > 0 ? (
+                    filteredOptions.map((option, index) => (
+                      <li
+                        key={index}
+                        className={cn(
+                          `px-4 py-2 cursor-pointer hover:bg-accent/10 hover:text-accent-foreground text-sm border-b border-border last:border-b-0`,
+                          optionClassName || "text-foreground",
+                          value === option.value ||
+                            (isOthersSelected && option.value === "Others")
+                            ? `font-medium text-primary bg-primary/10`
+                            : ""
+                        )}
+                        onClick={() => handleOptionClick(option.value)}
+                        style={{ backgroundColor: option.color }}
+                      >
+                        {option.label}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="px-4 py-2 text-sm text-muted-foreground">
+                      No options found.
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
           {addButton &&
             (createNewElement ? (

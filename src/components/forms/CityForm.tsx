@@ -1,12 +1,13 @@
 "use client";
 
-import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
+import { useForm, useFieldArray, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addLocation } from "@/app/actions/locations";
 import { Button } from "../formElements/Button";
 import TextField from "../formElements/TextField";
 import { DeleteButton } from "../formElements/DeleteButton";
+import HTMLSelect from "../formElements/HTMLSelect";
 
 const categories = [
   "area",
@@ -37,8 +38,13 @@ const CitySchema = z.object({
 type CityFormValues = z.infer<typeof CitySchema>;
 // { city: string; areas: { value: string }[] }
 
-export default function CityForm() {
-  const { control, register, handleSubmit } = useForm<CityFormValues>({
+export function CityForm() {
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CityFormValues>({
     resolver: zodResolver(CitySchema),
     defaultValues: { city: "", category: "area", areas: [{ value: "" }] },
   });
@@ -73,44 +79,61 @@ export default function CityForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-4 max-w-md mx-auto border p-4 py-6 rounded-lg w-full"
+    >
       {/* City */}
-      <div>
-        <label>City</label>
-        <input {...register("city")} className="border px-2 py-1" />
-      </div>
+      <TextField
+        label="City"
+        {...register("city")}
+        error={errors.city?.message}
+      />
 
       {/* Category */}
-      <div>
-        <label>Category</label>
-        <select {...register("category")} className="border px-2 py-1">
-          <option value="">Select Category</option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
-      </div>
+      <HTMLSelect
+        label="Category"
+        options={categories.map((category) => ({
+          label: category,
+          value: category,
+        }))}
+        {...register("category")}
+        error={errors.category?.message}
+      />
 
       {/* Dynamic Areas */}
-      <div>
+      <div className="bg-muted/20 rounded-sm p-4">
         {fields.map((field, index) => (
-          <div key={field.id} className="flex gap-2 mb-2">
+          <div key={field.id} className="flex gap-2 mb-2 relative">
             <TextField
               label="Area"
-              {...register(`areas.${index}.value` as const)} // ✅ Note `.value`
+              {...register(`areas.${index}.value` as const)}
               className="border px-2 py-1"
+              error={errors.areas?.[index]?.value?.message}
             />
-            <DeleteButton onClick={() => remove(index)} />
+            {fields.length > 1 && (
+              <DeleteButton
+                onClick={() => remove(index)}
+                icon="x"
+                size="micro"
+                className="absolute right-2 top-1 rounded-full"
+                soundEnabled={true}
+              />
+            )}
           </div>
         ))}
-        <button type="button" onClick={() => append({ value: "" })}>
+        <Button
+          onClick={() => append({ value: "" })}
+          variant="outline"
+          className="w-full"
+        >
           + Add Area
-        </button>
+        </Button>
       </div>
 
-      <Button type="submit" className="bg-green-600 text-white px-4 py-2">
+      {/* Separator */}
+      <div className="h-px bg-muted my-2"></div>
+      <Button type="submit" className="w-full mt-2">
         Save
       </Button>
     </form>

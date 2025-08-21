@@ -485,7 +485,7 @@ const DeleteButton = React.forwardRef<HTMLButtonElement, DeleteButtonProps>(
               </motion.div>
             </motion.div>
 
-            {size !== "icon" && (
+            {!size?.includes("icon") && size !== "micro" && size !== "tiny" && (
               <motion.span
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}

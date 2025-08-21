@@ -1,4 +1,4 @@
-import CityForm from "@/components/forms/CityForm";
+import { CityForm } from "@/components/forms/CityForm";
 
 export const metadata = {
   title: "Sign Up - Marti-Boutique",
@@ -19,7 +19,7 @@ export const metadata = {
 
 export default function CityFormPage() {
   return (
-    <main>
+    <main className="flex flex-col items-center justify-center min-h-screen">
       <CityForm />
     </main>
   );

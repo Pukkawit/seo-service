@@ -136,15 +136,15 @@ const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
               `block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none text-sm`,
               prefix ? "pl-3 rounded-l-none" : "pl-3",
               internalValue &&
-                "text-foreground font-medium border-primary bg-background", // Use internalValue for styling
-              "focus:ring-primary focus:border-primary bg-input text-foreground border-input",
+                "font-medium border-primary bg-background text-primary", // Use internalValue for styling
+              "focus:ring-primary focus:border-primary bg-input  border-input",
               inputClassName,
               touched && error ? "border-destructive text-destructive" : ""
             )}
           />
         </div>
         <div>
-          {touched && error ? (
+          {error ? (
             <p className="mt-1 text-sm text-destructive text-left">{error}</p>
           ) : null}
         </div>

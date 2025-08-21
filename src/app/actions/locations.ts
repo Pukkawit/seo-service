@@ -18,16 +18,44 @@ export async function addLocation({
 
   const supabase = await createServerSupabaseClient();
 
-  // Insert multiple areas at once
-  const { error } = await supabase
+  // Check if city + category exists
+  const { data: existing, error: fetchError } = await supabase
     .from("locations")
-    .insert(areas.map((name) => ({ city, category, name })));
+    .select("id, name")
+    .eq("city", city)
+    .eq("category", category)
+    .single();
 
-  if (error) {
-    console.error(error);
-    return { success: false, error: error.message };
+  if (fetchError && fetchError.code !== "PGRST116") {
+    // PGRST116 = no rows found, ignore
+    return { success: false, error: fetchError.message };
   }
 
-  revalidatePath("/"); // refresh UI cache
+  if (existing) {
+    // merge new areas with old ones
+    const updatedAreas = Array.from(new Set([...existing.name, ...areas]));
+    const { error: updateError } = await supabase
+      .from("locations")
+      .update({ name: updatedAreas, updated_at: new Date() })
+      .eq("id", existing.id);
+
+    if (updateError) return { success: false, error: updateError.message };
+  } else {
+    // insert new
+    const { error: insertError } = await supabase
+      .from("locations")
+      .insert([
+        {
+          city,
+          category,
+          name: areas,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ]);
+    if (insertError) return { success: false, error: insertError.message };
+  }
+
+  revalidatePath("/"); // refresh UI
   return { success: true };
 }

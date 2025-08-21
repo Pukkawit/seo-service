@@ -1,26 +1,654 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
+/* Tailwind CSS v4 @theme inline configuration */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Dark mode configuration */
+  --default-mode: dark;
+  --dark-mode: "class";
+
+  --font-Saira: "Saira", sans-serif;
+  --font-PFBeauSansProThin: "PFBeauSansPro-Thin", sans-serif;
+  --font-logo: "AvenirLTStd-Black", sans-serif;
+  --font-logo-thin: "AvenirLTStd-Roman", sans-serif;
+  --font-siteLogo-thick: "MonktonBold Regular", sans-serif;
+  --font-siteLogo-thin: "Geometria-Light", sans-serif;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Border Radius */
+  --rounded-lg: var(--radius);
+  --rounded-md: calc(var(--radius) - 2px);
+  --rounded-sm: calc(var(--radius) - 4px);
+  --rounded-xs: calc(var(--radius) - 6px);
+
+  /* z-index Scale */
+  --z-index-60: 60;
+  --z-index-70: 70;
+  --z-index-80: 80;
+  --z-index-90: 90;
+  --z-index-100: 100;
+
+  /* Animation tokens (generate animate-* classes) */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-spin: spin 1.5s linear infinite;
+  --animate-fade-in: fade-in 0.3s ease-in-out;
+  --animate-zoom-in: zoom-in 0.3s ease-in-out;
+  --animate-blink: blink 1s step-end infinite;
+  --animate-pulse-slow: pulse-slow 2s infinite alternate;
+  --animate-shine: shine 1.5s infinite linear;
+  --animate-gradient-shift: gradient-shift 10s ease infinite;
+  --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+    forwards;
+  --animate-slideIn: slideIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  --animate-slideOut: slideOut 1s cubic-bezier(0.4, 0.6, 0.2, 1) forwards;
+  --animate-slide-in-from-left: slide-in-from-left 0.3s ease-in-out;
+  --animate-slide-in-from-right: slide-in-from-right 0.3s ease-in-out;
+  --animate-slide-in-bottom: slide-in-bottom 0.8s;
+  --animate-slide-in-top: slide-in-top 0.8s;
+  --animate-slide-down: slide-down 0.3s ease-out forwards;
+  --animate-slide-up: slide-up 0.3s ease-out forwards;
+
+  /* Map standard Tailwind color names to new custom variables */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-emphasis: hsl(var(--emphasis));
+  --color-emphasis-foreground: hsl(var(--emphasis-foreground));
+  --color-emphasis-hover: hsl(var(--emphasis-hover));
+  --color-emphasis-active: hsl(var(--emphasis-active));
+  --color-emphasis-disabled: hsl(var(--emphasis-disabled));
+  --color-emphasis-disabled-foreground: hsl(
+    var(--emphasis-disabled-foreground)
+  );
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-active: hsl(var(--primary-active));
+  --color-primary-disabled: hsl(var(--primary-disabled));
+  --color-primary-disabled-foreground: hsl(var(--primary-disabled-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-hover: hsl(var(--secondary-hover));
+  --color-secondary-active: hsl(var(--secondary-active));
+  --color-secondary-disabled: hsl(var(--secondary-disabled));
+  --color-secondary-disabled-foreground: hsl(
+    var(--secondary-disabled-foreground)
+  );
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-hover: hsl(var(--muted-hover));
+  --color-muted-active: hsl(var(--muted-active));
+  --color-muted-disabled: hsl(var(--muted-disabled));
+  --color-muted-disabled-foreground: hsl(var(--muted-disabled-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-hover: hsl(var(--accent-hover));
+  --color-accent-active: hsl(var(--accent-active));
+  --color-accent-disabled: hsl(var(--accent-disabled));
+  --color-accent-disabled-foreground: hsl(var(--accent-disabled-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-hover: hsl(var(--destructive-hover));
+  --color-destructive-active: hsl(var(--destructive-active));
+  --color-destructive-disabled: hsl(var(--destructive-disabled));
+  --color-destructive-disabled-foreground: hsl(
+    var(--destructive-disabled-foreground)
+  );
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-hover: hsl(var(--success-hover));
+  --color-success-active: hsl(var(--success-active));
+  --color-success-disabled: hsl(var(--success-disabled));
+  --color-success-disabled-foreground: hsl(var(--success-disabled-foreground));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-hover: hsl(var(--warning-hover));
+  --color-warning-active: hsl(var(--warning-active));
+  --color-warning-disabled: hsl(var(--warning-disabled));
+  --color-warning-disabled-foreground: hsl(var(--warning-disabled-foreground));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-info-hover: hsl(var(--info-hover));
+  --color-info-active: hsl(var(--info-active));
+  --color-info-disabled: hsl(var(--info-disabled));
+  --color-info-disabled-foreground: hsl(var(--info-disabled-foreground));
 }
 
-@media (prefers-color-scheme: dark) {
+@font-face {
+  font-family: "MonktonBold Regular";
+  src: url("/fonts/MonktonBold Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Geometria-Light";
+  src: url("/fonts/Geometria-Light.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "AvenirLTStd-Black";
+  src: url("/fonts/AvenirLTStd-Black.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "AvenirLTStd-Roman";
+  src: url("/fonts/AvenirLTStd-Roman.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "PFBeauSansPro-Thin";
+  src: url("/fonts/PFBeauSansPro-Thin.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Saira";
+  src: url("/fonts/Saira-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Saira";
+  src: url("/fonts/Saira-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Saira";
+  src: url("/fonts/Saira-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Saira";
+  src: url("/fonts/Saira-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "PFBeauSansPro-Book";
+  src: url("/fonts/PFBeauSansPro-Book.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Base theme variables for light mode */
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%; /* White */
+    --foreground: 215.4 16.3% 10%; /* Dark Text */
+    --card: 210 16.7% 97.3%; /* Light Gray */
+    --card-foreground: 215.4 16.3% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Emphasis (deep blue for hierarchy) */
+    --emphasis: 220 85% 40%;
+    --emphasis-foreground: 0 0% 100%;
+    --emphasis-hover: 220 85% 35%;
+    --emphasis-active: 220 85% 30%;
+    --emphasis-disabled: 215 20.2% 46.9%;
+    --emphasis-disabled-foreground: 210 16.7% 97.3%;
+
+    /* Primary (blue) */
+    --primary: 220 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 220 80% 45%;
+    --primary-active: 220 80% 38%;
+    --primary-disabled: 217.2 16.3% 94.5%;
+    --primary-disabled-foreground: 215 20.2% 46.9%;
+
+    /* Secondary (warm orange) */
+    --secondary: 25 85% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 25 85% 45%;
+    --secondary-active: 25 85% 38%;
+    --secondary-disabled: 25 30% 85%;
+    --secondary-disabled-foreground: 215 20.2% 46.9%;
+
+    /* Muted (neutral) */
+    --muted: 215 20.2% 46.9%;
+    --muted-foreground: 215.4 16.3% 10%;
+    --muted-hover: 217.2 16.3% 94.5%;
+    --muted-active: 215 20.2% 80%;
+    --muted-disabled: 0 0% 100%;
+    --muted-disabled-foreground: 215 20.2% 46.9%;
+
+    /* Accent (pink) */
+    --accent: 340 75% 60%;
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 340 75% 50%;
+    --accent-active: 340 75% 45%;
+    --accent-disabled: 217.2 16.3% 94.5%;
+    --accent-disabled-foreground: 215 20.2% 46.9%;
+
+    /* Status colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-hover: 0 84.2% 50%;
+    --destructive-active: 0 84.2% 40%;
+    --destructive-disabled: 0 84.2% 90%;
+    --destructive-disabled-foreground: 215 20.2% 46.9%;
+
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 0 0% 100%;
+    --success-hover: 142.1 76.2% 30%;
+    --success-active: 142.1 76.2% 25%;
+    --success-disabled: 142.1 76.2% 80%;
+    --success-disabled-foreground: 215 20.2% 46.9%;
+
+    --warning: 45.9 90.2% 49.2%;
+    --warning-foreground: 0 0% 100%;
+    --warning-hover: 45.9 90.2% 40%;
+    --warning-active: 45.9 90.2% 35%;
+    --warning-disabled: 45.9 90.2% 90%;
+    --warning-disabled-foreground: 215 20.2% 46.9%;
+
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 0 0% 100%;
+    --info-hover: 217.2 91.2% 50%;
+    --info-active: 217.2 91.2% 45%;
+    --info-disabled: 217.2 91.2% 70%;
+    --info-disabled-foreground: 215 20.2% 46.9%;
+  }
+
+  .dark {
+    --background: 215.4 16.3% 13.3%;
+    --foreground: 210 40% 98%;
+    --card: 215.4 16.3% 19.8%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Emphasis (lighter but rich blue) */
+    --emphasis: 220 80% 60%;
+    --emphasis-foreground: 215.4 16.3% 13.3%;
+    --emphasis-hover: 220 80% 55%;
+    --emphasis-active: 220 80% 50%;
+    --emphasis-disabled: 215 20.2% 65.1%;
+    --emphasis-disabled-foreground: 215.4 16.3% 13.3%;
+
+    /* Primary (slightly brighter blue for dark mode) */
+    --primary: 220 75% 65%;
+    --primary-foreground: 210 40% 98%;
+    --primary-hover: 220 75% 60%;
+    --primary-active: 220 75% 55%;
+    --primary-disabled: 215 20.2% 30%;
+    --primary-disabled-foreground: 215 20.2% 65.1%;
+
+    /* Secondary (warmer orange) */
+    --secondary: 25 80% 60%;
+    --secondary-foreground: 210 40% 98%;
+    --secondary-hover: 25 80% 55%;
+    --secondary-active: 25 80% 50%;
+    --secondary-disabled: 25 40% 30%;
+    --secondary-disabled-foreground: 215 20.2% 65.1%;
+
+    /* Muted */
+    --muted: 215 20.2% 65.1%;
+    --muted-foreground: 210 40% 98%;
+    --muted-hover: 215 20.2% 30%;
+    --muted-active: 239.2 76.2% 67.5%;
+    --muted-disabled: 215.4 16.3% 13.3%;
+    --muted-disabled-foreground: 215 20.2% 65.1%;
+
+    /* Accent (pink) */
+    --accent: 340 65% 65%;
+    --accent-foreground: 210 40% 98%;
+    --accent-hover: 340 65% 60%;
+    --accent-active: 340 65% 55%;
+    --accent-disabled: 215 20.2% 30%;
+    --accent-disabled-foreground: 215 20.2% 65.1%;
+
+    /* Status colors */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --destructive-hover: 0 62.8% 25%;
+    --destructive-active: 0 62.8% 20%;
+    --destructive-disabled: 0 62.8% 40%;
+    --destructive-disabled-foreground: 215 20.2% 65.1%;
+
+    --success: 142.1 76.2% 68.6%;
+    --success-foreground: 215.4 16.3% 13.3%;
+    --success-hover: 142.1 76.2% 36.3%;
+    --success-active: 142.1 76.2% 30%;
+    --success-disabled: 142.1 76.2% 15%;
+    --success-disabled-foreground: 215 20.2% 65.1%;
+
+    --warning: 45.9 90.2% 70.2%;
+    --warning-foreground: 215.4 16.3% 13.3%;
+    --warning-hover: 45.9 90.2% 60.2%;
+    --warning-active: 45.9 90.2% 49.2%;
+    --warning-disabled: 45.9 90.2% 25%;
+    --warning-disabled-foreground: 215 20.2% 65.1%;
+
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 210 40% 98%;
+    --info-hover: 217.2 91.2% 50%;
+    --info-active: 217.2 91.2% 45%;
+    --info-disabled: 217.2 91.2% 70%;
+    --info-disabled-foreground: 215 20.2% 65.1%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-[hsl(var(--border))]; /* Use direct hsl for border */
+  }
+  :where(body) {
+    @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
+  }
+  :where(body) {
+    @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
+  }
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* Custom scrollbar styling to match theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--card)); /* Use new card variable */
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--secondary));
+}
+
+/* Selection color */
+::selection {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--emphasis-foreground)); /* Use emphasis-foreground */
+}
+
+/* Focus ring styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  --tw-ring-color: hsl(var(--primary));
+}
+
+/* Custom animations */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: var(--dropdown-max-height); /* Use CSS variable */
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    max-height: var(--dropdown-max-height);
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes accordion-down {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: var(--accordion-max-height); /* Use CSS variable */
+    opacity: 1;
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    max-height: var(--accordion-max-height);
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoom-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: var(--dropdown-max-height); /* Use CSS variable */
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    max-height: var(--dropdown-max-height);
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
